@@ -1,18 +1,12 @@
 defmodule MetexJoe do
-  @moduledoc """
-  Documentation for `MetexJoe`.
-  """
 
-  @doc """
-  Hello world.
+  def temperatures_of(cities) do
+    coordinator_pid = spawn(MetexJoe.Coordinator, :loop, [[], Enum.count(cities)])
 
-  ## Examples
-
-      iex> MetexJoe.hello()
-      :world
-
-  """
-  def hello do
-    :world
+    cities |> Enum.each(fn city ->
+      worker_pid = spawn(MetexJoe.Worker, :loop, [])
+      send(worker_pid, {coordinator_pid, city})
+    end)
   end
+
 end
