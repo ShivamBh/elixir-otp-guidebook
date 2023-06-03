@@ -11,6 +11,10 @@ defmodule Calculator do
         message -> process_message(current_value, message)
       end
 
+    # Could pattern match here as {:add, value }
+    # But that would make this a huge function
+    # Elixir way -> multi clause functions, as below
+
     loop(new_value)
   end
 
