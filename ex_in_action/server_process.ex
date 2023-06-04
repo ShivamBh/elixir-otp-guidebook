@@ -39,6 +39,20 @@ defmodule ServerProcess do
 end
 
 defmodule KeyValueStore do
+  # implement more abstracted interface functions
+  def start do
+    ServerProcess.start(KeyValueStore)
+  end
+
+  def put(pid, key, value) do
+    ServerProcess.call(pid, {:put, key, value})
+  end
+
+  def get(pid, key) do
+    ServerProcess.call(pid, {:get, key})
+  end
+
+  # implement the interface init/1, handle_call/2 required by the generic server process
   # implement the init state function
   def init do
     %{}
