@@ -12,7 +12,13 @@ defmodule ServerProcess do
 
   defp loop(callback_module, current_state) do
     receive do
-      {request, caller} ->
+      # handle async calls
+      {:cast, request} ->
+        new_state = callback_module.handle_cast(request, current_state)
+        loop(callback_module, new_state)
+
+      # for synchronous messages
+      {:call, request, caller} ->
         # calls the callback_module to process the message
         # handle_call must implement this interface: takes request and current state and returns a {request, new_state} tuple
         {response, new_state} = callback_module.handle_call(request, current_state)
@@ -25,9 +31,15 @@ defmodule ServerProcess do
     end
   end
 
+  # handle async calls
+  def cast(server_pid, request) do
+    send(server_pid, {:cast, request})
+  end
+
   def call(server_pid, request) do
     # issue requests to the server process
-    send(server_pid, {request, self()})
+    # send(server_pid, {request, self()})
+    send(server_pid, {:call, request, self()})
 
     # receives from the mailbox an item matching the {:response, response} format
     receive do
@@ -44,8 +56,9 @@ defmodule KeyValueStore do
     ServerProcess.start(KeyValueStore)
   end
 
+  # use async cast/2 to handle put requests
   def put(pid, key, value) do
-    ServerProcess.call(pid, {:put, key, value})
+    ServerProcess.cast(pid, {:put, key, value})
   end
 
   def get(pid, key) do
@@ -59,8 +72,8 @@ defmodule KeyValueStore do
   end
 
   # handle the multiple type of message processing
-  def handle_call({:put, key, value}, state) do
-    {:ok, Map.put(state, key, value)}
+  def handle_cast({:put, key, value}, state) do
+    Map.put(state, key, value)
   end
 
   def handle_call({:get, key}, state) do
